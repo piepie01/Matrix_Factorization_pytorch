@@ -32,12 +32,9 @@ class Net(nn.Module):
         super(Net, self).__init__()
         self.embed_0 = nn.Embedding(user_len+1, embedding_size, sparse = True)
         self.embed_1 = nn.Embedding(movie_len+1, embedding_size, sparse = True)
-        #self.embed_2 = nn.Embedding(60+1, 20, sparse = True)
         self.embed_0_0 = nn.Embedding(user_len+1, 1, sparse = True)
         self.embed_1_0 = nn.Embedding(movie_len+1, 1, sparse = True)
-        #self.embed_2_0 = nn.Embedding(60+1, 1, sparse = True)
         self.embedding_size = embedding_size
-        #self.fc1_0 = nn.Linear(520, 500)
     def forward(self, seq0, seq1):
         out0 = self.embed_0(seq0)
         out1 = self.embed_1(seq1)
@@ -76,7 +73,7 @@ class Matrix_Factorization():
         #opt = torch.optim.SGD(net.parameters(), lr = 1e-3,weight_decay=1e-5,  momentum=0.9)
     def fit(self, Data, epochs, batch_size, verbose_step, verbose_test, save_file):
 
-        self.min_rmse = 1.0
+        self.min_rmse = 10.0
         conv = clr_conv(Data.train_X,Data.train_Y)
         data_loader = DataLoader(conv, shuffle = True, batch_size = 128)
         vali_conv = clr_conv(Data.valid_X,Data.valid_Y)
