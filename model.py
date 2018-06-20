@@ -24,8 +24,8 @@ class test_clr_conv(Dataset):
     def __len__(self):
         return self.length
     def __getitem__(self,index):
-        x0 = torch.LongTensor(self.X[index][0]).cuda()
-        x1 = torch.LongTensor(self.X[index][1]).cuda()
+        x0 = torch.LongTensor(self.X[index][0])
+        x1 = torch.LongTensor(self.X[index][1])
         return x0,x1
 class Net(nn.Module):
     def __init__(self, user_len, movie_len, embedding_size):
@@ -58,14 +58,20 @@ def weights_init(net):
     if classname.find('Embedding') != -1:
         nn.init.xavier_normal(net.weight.data)
 class Matrix_Factorization():
-    def __init__(self, user_len, movie_len, embedding_size, learning_rate, pre_train, model):
-        
-        self.net = Net(user_len, movie_len, embedding_size).cuda()
+    def __init__(self, user_len, movie_len, embedding_size, learning_rate, cuda, pre_train, model):
+        self.cuda = cuda
+        if cuda:
+            self.net = Net(user_len, movie_len, embedding_size).cuda()
+        else:
+            self.net = Net(user_len, movie_len, embedding_size)
         if pre_train == True:
             self.net.load_state_dict(model)
         else:
             self.net.apply(weights_init)
-            self.criterion = nn.MSELoss().cuda()
+            if cuda:
+                self.criterion = nn.MSELoss().cuda()
+            else:
+                self.criterion = nn.MSELoss()
             self.opt = torch.optim.SparseAdam(self.net.parameters(), lr = learning_rate)#,weight_decay=1e-5)
         #opt = torch.optim.SGD(net.parameters(), lr = 1e-3,weight_decay=1e-5,  momentum=0.9)
     def fit(self, Data, epochs, batch_size, verbose_step, verbose_test, save_file):
@@ -81,9 +87,14 @@ class Matrix_Factorization():
             for user,movie,y in data_loader:
                 self.net.train()
                 self.opt.zero_grad()
-                user = Variable(user.cuda())
-                movie = Variable(movie.cuda())
-                oup = Variable(y.cuda())
+                if self.cuda:
+                    user = Variable(user.cuda())
+                    movie = Variable(movie.cuda())
+                    oup = Variable(y.cuda())
+                else:
+                    user = Variable(user)
+                    movie = Variable(movie)
+                    oup = Variable(y)
                 out = self.net(user,movie)
                 loss = self.criterion(out, oup)
                 if cnt % verbose_step == 0:
@@ -102,9 +113,14 @@ class Matrix_Factorization():
         total = 0.0
         cnt = 0
         for x0,x1,y in loader:
-            inp0 = Variable(x0.cuda())
-            inp1 = Variable(x1.cuda())
-            oup = Variable(y.cuda())
+            if self.cuda:
+                inp0 = Variable(x0.cuda())
+                inp1 = Variable(x1.cuda())
+                oup = Variable(y.cuda())
+            else:
+                inp0 = Variable(x0)
+                inp1 = Variable(x1)
+                oup = Variable(y)
             out = self.net(inp0,inp1)
             total += self.criterion(out, oup)
             cnt += 1
@@ -124,8 +140,12 @@ class Matrix_Factorization():
         test_data_loader = DataLoader(test_conv, shuffle = False, batch_size = 128)
         pre = []
         for x0,x1 in test_data_loader:
-            inp0 = Variable(x0)
-            inp1 = Variable(x1)
+            if self.cuda:
+                inp0 = Variable(x0.cuda())
+                inp1 = Variable(x1.cuda())
+            else:
+                inp0 = Variable(x0)
+                inp1 = Variable(x1)
             out = self.net(inp0,inp1)
             out = out.data.cpu().numpy()
             for item in out:
