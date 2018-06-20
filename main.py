@@ -12,7 +12,7 @@ if __name__ == "__main__":
                                movie_len = Data.max_movie,
                                embedding_size = 500,
                                learning_rate = 1e-3,
-                               cuda = False
+                               cuda = False,
                                pre_train = False,
                                model = None)
     OuO.fit(Data = Data,
