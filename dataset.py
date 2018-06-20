@@ -21,7 +21,7 @@ class DataFiles():
     def read_data(self):
         print("Reading data...")
         #self.user = self._read_user()
-        3self.movie = self._read_movie()
+        #self.movie = self._read_movie()
         self.train_X, self.train_Y = self._read_train()
         self.train_X, self.valid_X, self.train_Y, self.valid_Y = self._train_split()
         #self.past_rate = self._past_view()
